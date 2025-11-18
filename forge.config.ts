@@ -18,7 +18,21 @@ const config: ForgeConfig = {
     executableName: 'Rentgen',
   },
   rebuildConfig: {},
-  makers: [new MakerSquirrel({}), new MakerZIP({}, ['darwin']), new MakerDMG({}), new MakerRpm({}), new MakerDeb({})],
+  makers: [
+    new MakerSquirrel({}),
+    new MakerZIP({}, ['darwin']),
+    new MakerDMG({}),
+    new MakerRpm({
+      options: {
+        bin: 'Rentgen',
+      },
+    }),
+    new MakerDeb({
+      options: {
+        bin: 'Rentgen',
+      },
+    }),
+  ],
   plugins: [
     new AutoUnpackNativesPlugin({}),
     new WebpackPlugin({
