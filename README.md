@@ -148,11 +148,6 @@ Releases are automatically built and published when you create and push a Git ta
    git push origin v1.2.0
    ```
 
-5. **Monitor the workflow**: The GitHub Actions workflow will automatically:
-   - Build the app for Windows, macOS, and Linux
-   - Generate release notes from commits
-   - Create a GitHub release with all artifacts
-
 ### Tag naming convention
 
 Use semantic versioning format: `vMAJOR.MINOR.PATCH` (e.g., `v1.2.0`, `v2.0.0`, `v1.2.1`)
