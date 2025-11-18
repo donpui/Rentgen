@@ -15,7 +15,7 @@ import { rendererConfig } from './webpack.renderer.config';
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
-    executableName: 'rentgen',
+    executableName: 'Rentgen',
   },
   rebuildConfig: {},
   makers: [new MakerSquirrel({}), new MakerZIP({}, ['darwin']), new MakerDMG({}), new MakerRpm({}), new MakerDeb({})],

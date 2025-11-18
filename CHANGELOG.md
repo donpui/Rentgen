@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0.5] - 2025-11-18
+
+### Changed
+
+- Added arm64 build for Windows and Linux
+
+### Fixed
+
+- Executable name
+
+### Note
+
+💻 How to Run on macOS
+
+macOS may block the app (“developer cannot be verified”).
+To run it normally:
+
+1. Move Rentgen.app to the Applications folder.
+2. Open Terminal and run the following command:
+
+`xattr -d com.apple.quarantine /Applications/Rentgen.app`
+
+After this, you can launch Rentgen from Finder or Spotlight as usual.
+
 ## [1.2.0.4] - 2025-11-18
 
 ### Fixed
