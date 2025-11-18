@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -35,3 +35,76 @@ jobs:
           path: |
             out/*
           retention-days: 30
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v5
+        with:
+          path: artifacts
+
+      - name: Extract tag name
+        id: tag
+        run: echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Fetch all tags
+        run: git fetch --tags
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          TAG_NAME="${{ steps.tag.outputs.TAG_NAME }}"
+
+          # Get all tags sorted by version
+          git tag --sort=-version:refname > /tmp/all_tags.txt
+
+          # Find the previous tag (the one before the current tag)
+          PREVIOUS_TAG=""
+          while IFS= read -r tag; do
+            if [ "$tag" != "$TAG_NAME" ]; then
+              PREVIOUS_TAG="$tag"
+              break
+            fi
+          done < /tmp/all_tags.txt
+
+          if [ -z "$PREVIOUS_TAG" ]; then
+            # First tag, get all commits up to this tag
+            NOTES=$(git log ${TAG_NAME} --pretty=format:"- %s (%h)" --no-merges)
+            COMPARE_URL="https://github.com/${{ github.repository }}/releases/tag/${TAG_NAME}"
+          else
+            # Get commits between previous tag and current tag
+            NOTES=$(git log ${PREVIOUS_TAG}..${TAG_NAME} --pretty=format:"- %s (%h)" --no-merges)
+            COMPARE_URL="https://github.com/${{ github.repository }}/compare/${PREVIOUS_TAG}...${TAG_NAME}"
+          fi
+
+          if [ -z "$NOTES" ]; then
+            NOTES="No changes found"
+          fi
+
+          {
+            echo "## What's Changed"
+            echo ""
+            echo "$NOTES"
+            echo ""
+            echo "**Full Changelog**: $COMPARE_URL"
+          } > release_notes.md
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.TAG_NAME }}
+          name: Release ${{ steps.tag.outputs.TAG_NAME }}
+          body_path: release_notes.md
+          files: artifacts/**/*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
