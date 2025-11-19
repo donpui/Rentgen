@@ -129,19 +129,6 @@ jobs:
             fi
           done
 
-          # Rename ZIP files (macOS): Rentgen-darwin-ARCH-VERSION.zip -> Rentgen-vVERSION-mac-ARCH.zip
-          find artifacts -type f -name "*darwin*.zip" | while read file; do
-            dir=$(dirname "$file")
-            basename=$(basename "$file")
-            # Extract arch from filename (e.g., Rentgen-darwin-x64-1.2.1.zip -> x64)
-            arch=$(echo "$basename" | sed -n 's/.*darwin-\(x64\|arm64\).*/\1/p')
-            if [ -n "$arch" ]; then
-              newname="Rentgen-v${VERSION}-mac-${arch}.zip"
-              mv "$file" "$dir/$newname"
-              echo "Renamed: $basename -> $newname"
-            fi
-          done
-
           # Rename EXE files (Windows): Rentgen VERSION Setup.exe -> Rentgen-vVERSION-win-ARCH.exe
           find artifacts -type f -name "*.exe" | while read file; do
             dir=$(dirname "$file")
@@ -203,7 +190,6 @@ jobs:
           echo "Searching for installer files..."
           find artifacts -type f \( \
             -name "*.dmg" -o \
-            -name "*.zip" -o \
             -name "*.exe" -o \
             -name "*.deb" -o \
             -name "*.rpm" \
@@ -253,7 +239,6 @@ jobs:
           body_path: release_notes.md
           files: |
             artifacts/**/*.dmg
-            artifacts/**/*.zip
             artifacts/**/*.exe
             artifacts/**/*.deb
             artifacts/**/*.rpm
