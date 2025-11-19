@@ -7,85 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.2.0.8] - 2025-11-18
+## [v1.2.0.9] - 2025-11-19
 
 ### Changed
 
-- Removed zip
-
-## [1.2.0.7] - 2025-11-18
-
-### Fixed
-
-- Fix executable name
-
-## [1.2.0.6] - 2025-11-18
-
-### Fixed
-
-- Fix executable name build
-
-### Note
-
-💻 How to Run on macOS
-
-macOS may block the app (“developer cannot be verified”).
-To run it normally:
-
-1. Move Rentgen.app to the Applications folder.
-2. Open Terminal and run the following command:
-
-`xattr -d com.apple.quarantine /Applications/Rentgen.app`
-
-After this, you can launch Rentgen from Finder or Spotlight as usual.
-
-## [1.2.0.5] - 2025-11-18
-
-### Changed
-
-- Added arm64 build for Windows and Linux
-
-### Fixed
-
-- Executable name
-
-### Note
-
-💻 How to Run on macOS
-
-macOS may block the app (“developer cannot be verified”).
-To run it normally:
-
-1. Move Rentgen.app to the Applications folder.
-2. Open Terminal and run the following command:
-
-`xattr -d com.apple.quarantine /Applications/Rentgen.app`
-
-After this, you can launch Rentgen from Finder or Spotlight as usual.
-
-## [1.2.0.4] - 2025-11-18
-
-### Fixed
-
-- Fixed debian package build
-
-## [1.2.0.3] - 2025-11-18
-
-### Fixed
-
-- Fixed release
-
-## [1.2.0.2] - 2025-11-18
+- Build for x64, arm64 arch: mac, win, linux
 
 ### Added
 
-- Add Github actions for deployment
+- Added Github actions for build and release
 
 ### Fixed
 
 - Fixed [#10](https://github.com/LiudasJan/Rentgen/issues/10)
 
-### Security
+### Note
+
+💻 How to Run on macOS
+
+macOS may block the app (“developer cannot be verified”).
+To run it normally:
+
+1. Move Rentgen.app to the Applications folder.
+2. Open Terminal and run the following command:
+
+`xattr -d com.apple.quarantine /Applications/Rentgen.app`
+
+After this, you can launch Rentgen from Finder or Spotlight as usual.
 
 [Unreleased]: https://github.com/LiudasJan/Rentgen/compare/v1.2.0...HEAD
 [1.2.0]: https://github.com/LiudasJan/Rentgen/releases/tag/v1.2.0
