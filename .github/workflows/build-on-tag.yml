@@ -70,15 +70,82 @@ jobs:
       - name: Fetch all tags
         run: git fetch --tags
 
-      - name: Generate release notes
+      - name: Generate release notes from CHANGELOG
         id: release_notes
         run: |
           TAG_NAME="${{ steps.tag.outputs.TAG_NAME }}"
-
-          # Get all tags sorted by version
+          
+          # Extract version from tag (remove 'v' prefix if present)
+          VERSION=$(echo "$TAG_NAME" | sed 's/^v//')
+          
+          # Check if CHANGELOG.md exists
+          if [ ! -f "CHANGELOG.md" ]; then
+            echo "CHANGELOG.md not found, falling back to git commits"
+            # Fallback to git commits
+            git tag --sort=-version:refname > /tmp/all_tags.txt
+            PREVIOUS_TAG=""
+            while IFS= read -r tag; do
+              if [ "$tag" != "$TAG_NAME" ]; then
+                PREVIOUS_TAG="$tag"
+                break
+              fi
+            done < /tmp/all_tags.txt
+            
+            if [ -z "$PREVIOUS_TAG" ]; then
+              NOTES=$(git log ${TAG_NAME} --pretty=format:"- %s (%h)" --no-merges)
+              COMPARE_URL="https://github.com/${{ github.repository }}/releases/tag/${TAG_NAME}"
+            else
+              NOTES=$(git log ${PREVIOUS_TAG}..${TAG_NAME} --pretty=format:"- %s (%h)" --no-merges)
+              COMPARE_URL="https://github.com/${{ github.repository }}/compare/${PREVIOUS_TAG}...${TAG_NAME}"
+            fi
+            
+            if [ -z "$NOTES" ]; then
+              NOTES="No changes found"
+            fi
+            
+            {
+              echo "## What's Changed"
+              echo ""
+              echo "$NOTES"
+              echo ""
+              echo "**Full Changelog**: $COMPARE_URL"
+            } > release_notes.md
+            exit 0
+          fi
+          
+          # Extract changelog entry for this version
+          # Look for lines starting with ## [vVERSION] or ## [VERSION] or ## [TAG_NAME]
+          CHANGELOG_ENTRY=""
+          IN_SECTION=false
+          
+          # Escape special characters in version for regex
+          ESCAPED_VERSION=$(echo "$VERSION" | sed 's/\./\\./g')
+          ESCAPED_TAG=$(echo "$TAG_NAME" | sed 's/\./\\./g')
+          
+          while IFS= read -r line || [ -n "$line" ]; do
+            # Check if this is the start of our version section
+            # Match patterns like: ## [v1.2.0.9], ## [1.2.0.9], or ## [v1.2.0.9]
+            if echo "$line" | grep -qE "^## \[v?${ESCAPED_VERSION}\]|^## \[${ESCAPED_TAG}\]"; then
+              IN_SECTION=true
+              # Skip the header line itself, we'll use the content below
+              continue
+            fi
+            
+            # If we're in our section and hit another version header, stop
+            if [ "$IN_SECTION" = true ]; then
+              if echo "$line" | grep -qE "^## \["; then
+                break
+              fi
+              # Add the line to our entry
+              CHANGELOG_ENTRY="${CHANGELOG_ENTRY}${line}"$'\n'
+            fi
+          done < CHANGELOG.md
+          
+          # Trim trailing newlines and whitespace
+          CHANGELOG_ENTRY=$(echo -n "$CHANGELOG_ENTRY" | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' | sed 's/[[:space:]]*$//')
+          
+          # Get previous tag for compare URL
           git tag --sort=-version:refname > /tmp/all_tags.txt
-
-          # Find the previous tag (the one before the current tag)
           PREVIOUS_TAG=""
           while IFS= read -r tag; do
             if [ "$tag" != "$TAG_NAME" ]; then
@@ -86,28 +153,43 @@ jobs:
               break
             fi
           done < /tmp/all_tags.txt
-
+          
           if [ -z "$PREVIOUS_TAG" ]; then
-            # First tag, get all commits up to this tag
-            NOTES=$(git log ${TAG_NAME} --pretty=format:"- %s (%h)" --no-merges)
             COMPARE_URL="https://github.com/${{ github.repository }}/releases/tag/${TAG_NAME}"
           else
-            # Get commits between previous tag and current tag
-            NOTES=$(git log ${PREVIOUS_TAG}..${TAG_NAME} --pretty=format:"- %s (%h)" --no-merges)
             COMPARE_URL="https://github.com/${{ github.repository }}/compare/${PREVIOUS_TAG}...${TAG_NAME}"
           fi
-
-          if [ -z "$NOTES" ]; then
-            NOTES="No changes found"
+          
+          # If we found changelog entry, use it; otherwise fallback to git commits
+          # Check if CHANGELOG_ENTRY has meaningful content (not just whitespace)
+          if [ -n "$CHANGELOG_ENTRY" ] && [ "$(echo "$CHANGELOG_ENTRY" | tr -d '[:space:]')" != "" ]; then
+            {
+              echo "$CHANGELOG_ENTRY"
+              echo ""
+              echo "**Full Changelog**: $COMPARE_URL"
+            } > release_notes.md
+            echo "Successfully extracted changelog entry for ${TAG_NAME}"
+          else
+            echo "No changelog entry found for ${TAG_NAME}, falling back to git commits"
+            # Fallback to git commits
+            if [ -z "$PREVIOUS_TAG" ]; then
+              NOTES=$(git log ${TAG_NAME} --pretty=format:"- %s (%h)" --no-merges)
+            else
+              NOTES=$(git log ${PREVIOUS_TAG}..${TAG_NAME} --pretty=format:"- %s (%h)" --no-merges)
+            fi
+            
+            if [ -z "$NOTES" ]; then
+              NOTES="No changes found"
+            fi
+            
+            {
+              echo "## What's Changed"
+              echo ""
+              echo "$NOTES"
+              echo ""
+              echo "**Full Changelog**: $COMPARE_URL"
+            } > release_notes.md
           fi
-
-          {
-            echo "## What's Changed"
-            echo ""
-            echo "$NOTES"
-            echo ""
-            echo "**Full Changelog**: $COMPARE_URL"
-          } > release_notes.md
 
       - name: Rename installer files with platform prefixes
         run: |
